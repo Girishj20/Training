@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedPredict AI - Premium Clinical Dashboard</title>
+    
+    <!-- Google Fonts & Tailwind -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        bgMain: '#F8FAFC',
+                        cardBg: 'rgba(255, 255, 255, 0.8)',
+                        borderBg: 'rgba(255, 255, 255, 0.6)',
+                        primaryBlue: '#0284c7',
+                        secondaryTeal: '#0d9488',
+                        accentViolet: '#8b5cf6',
+                        successGreen: '#10b981',
+                        dangerRose: '#f43f5e',
+                        textDark: '#0f172a',
+                        textSec: '#475569'
+                    },
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                        heading: ['Outfit', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        premium: '0 20px 50px rgba(15, 23, 42, 0.05)',
+                        glowBlue: '0 0 25px rgba(2, 132, 199, 0.2)',
+                        glowViolet: '0 0 25px rgba(139, 92, 246, 0.2)'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #F8FAFC;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.05);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card:hover {
+            box-shadow: 0 30px 70px rgba(15, 23, 42, 0.09);
+        }
+        .hover-lift {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .hover-lift:hover {
+            transform: translateY(-4px);
+        }
+        .tab-panel {
+            display: none;
+        }
+        .tab-panel.active {
+            display: block;
+            animation: fadeUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(71, 85, 105, 0.2);
+            border-radius: 9px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(71, 85, 105, 0.4);
+        }
+        .shimmer {
+            background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+            background-size: 200% 100%;
+            animation: loading-shimmer 1.5s infinite;
+        }
+        @keyframes loading-shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        input[type=range]::-webkit-slider-thumb {
+            background: #0284c7;
+            border: 2px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+    </style>
+</head>
+<body class="text-textDark antialiased custom-scrollbar min-h-screen flex flex-col justify-between">
+
+    <!-- Sticky Navigation -->
+    <header class="sticky top-0 z-50 bg-white/75 backdrop-blur-xl border-b border-slate-200/50 px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('dashboard')">
+            <div class="h-10 w-10 bg-gradient-to-tr from-primaryBlue to-accentViolet rounded-xl flex items-center justify-center font-bold text-lg text-white shadow-md">
+                <i class="fa-solid fa-heart-pulse text-base animate-pulse"></i>
+            </div>
+            <div class="flex flex-col">
+                <span class="font-heading font-extrabold text-lg tracking-tight text-textDark">MedPredict<span class="text-primaryBlue">AI</span></span>
+                <span class="text-[9px] text-textSec font-bold uppercase tracking-widest leading-none">Decision Support</span>
+            </div>
+        </div>
+
+        <!-- Desktop Navigation -->
+        <nav class="hidden lg:flex items-center space-x-1 bg-slate-100/80 p-1 rounded-xl">
+            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn px-4 py-2 rounded-lg text-xs font-semibold tracking-wide uppercase transition-all text-textSec hover:text-textDark">Dashboard</button>
+            <button onclick="switchTab('predictor')" id="nav-predictor" class="nav-btn px-4 py-2 rounded-lg text-xs font-semibold tracking-wide uppercase transition-all text-textSec hover:text-textDark">Predictor</button>
+            <button onclick="switchTab('directory')" id="nav-directory" class="nav-btn px-4 py-2 rounded-lg text-xs font-semibold tracking-wide uppercase transition-all text-textSec hover:text-textDark">Directory</button>
+            <button onclick="switchTab('analytics')" id="nav-analytics" class="nav-btn px-4 py-2 rounded-lg text-xs font-semibold tracking-wide uppercase transition-all text-textSec hover:text-textDark">Analytics</button>
+            <button onclick="switchTab('ml')" id="nav-ml" class="nav-btn px-4 py-2 rounded-lg text-xs font-semibold tracking-wide uppercase transition-all text-textSec hover:text-textDark">Machine Learning</button>
+            <button onclick="switchTab('team')" id="nav-team" class="nav-btn px-4 py-2 rounded-lg text-xs font-semibold tracking-wide uppercase transition-all text-textSec hover:text-textDark">Team Roles</button>
+            <button onclick="switchTab('about')" id="nav-about" class="nav-btn px-4 py-2 rounded-lg text-xs font-semibold tracking-wide uppercase transition-all text-textSec hover:text-textDark">About</button>
+        </nav>
+
+        <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-2 bg-sky-50 px-3 py-1.5 rounded-full border border-sky-100 shadow-sm">
+                <div class="h-2 w-2 bg-primaryBlue rounded-full animate-ping"></div>
+                <span class="text-[10px] font-bold text-sky-800 tracking-wider uppercase">Clinical AI Active</span>
+            </div>
+            <div class="h-9 w-9 rounded-full bg-gradient-to-tr from-accentViolet to-primaryBlue flex items-center justify-center font-bold text-white shadow-sm hover:scale-105 transition-all cursor-pointer">
+                MD
+            </div>
+            <button onclick="toggleMobileMenu()" class="lg:hidden p-2 rounded-xl bg-slate-100 text-textDark hover:bg-slate-200 focus:outline-none transition-all" id="mobile-menu-btn">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" id="hamburger-icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+                <svg class="h-6 w-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" id="close-icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Mobile Navigation Dropdown -->
+    <div id="mobile-nav-menu" class="hidden lg:hidden bg-white/95 backdrop-blur-xl border-b border-slate-200 px-6 py-4 space-y-2 transition-all duration-300 shadow-lg sticky top-[73px] z-40">
+        <button onclick="switchTab('dashboard'); toggleMobileMenu(false);" id="mobile-nav-dashboard" class="mobile-nav-btn w-full text-left px-4 py-3 rounded-xl text-sm font-semibold uppercase tracking-wide transition-all text-textSec hover:text-textDark hover:bg-slate-50">Dashboard</button>
+        <button onclick="switchTab('predictor'); toggleMobileMenu(false);" id="mobile-nav-predictor" class="mobile-nav-btn w-full text-left px-4 py-3 rounded-xl text-sm font-semibold uppercase tracking-wide transition-all text-textSec hover:text-textDark hover:bg-slate-50">Predictor</button>
+        <button onclick="switchTab('directory'); toggleMobileMenu(false);" id="mobile-nav-directory" class="mobile-nav-btn w-full text-left px-4 py-3 rounded-xl text-sm font-semibold uppercase tracking-wide transition-all text-textSec hover:text-textDark hover:bg-slate-50">Directory</button>
+        <button onclick="switchTab('analytics'); toggleMobileMenu(false);" id="mobile-nav-analytics" class="mobile-nav-btn w-full text-left px-4 py-3 rounded-xl text-sm font-semibold uppercase tracking-wide transition-all text-textSec hover:text-textDark hover:bg-slate-50">Analytics</button>
+        <button onclick="switchTab('ml'); toggleMobileMenu(false);" id="mobile-nav-ml" class="mobile-nav-btn w-full text-left px-4 py-3 rounded-xl text-sm font-semibold uppercase tracking-wide transition-all text-textSec hover:text-textDark hover:bg-slate-50">Machine Learning</button>
+        <button onclick="switchTab('team'); toggleMobileMenu(false);" id="mobile-nav-team" class="mobile-nav-btn w-full text-left px-4 py-3 rounded-xl text-sm font-semibold uppercase tracking-wide transition-all text-textSec hover:text-textDark hover:bg-slate-50">Team Roles</button>
+        <button onclick="switchTab('about'); toggleMobileMenu(false);" id="mobile-nav-about" class="mobile-nav-btn w-full text-left px-4 py-3 rounded-xl text-sm font-semibold uppercase tracking-wide transition-all text-textSec hover:text-textDark hover:bg-slate-50">About</button>
+    </div>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 py-8 md:px-8 flex-grow w-full">
+        
+        <!-- DASHBOARD TAB -->
+        <div id="tab-dashboard" class="tab-panel active">
+            <!-- Hero Section -->
+            <section class="relative mb-12 p-8 md:p-12 rounded-3xl overflow-hidden glass-card bg-gradient-to-tr from-white/95 via-white/80 to-sky-50/20">
+                <div class="absolute -right-12 -top-12 h-64 w-64 rounded-full bg-sky-300/10 blur-3xl pointer-events-none"></div>
+                <div class="absolute -left-12 -bottom-12 h-64 w-64 rounded-full bg-violet-300/10 blur-3xl pointer-events-none"></div>
+                
+                <div class="relative max-w-3xl z-10">
+                    <div class="inline-flex items-center space-x-2 bg-sky-100/60 px-3 py-1.5 rounded-full border border-sky-200/50 mb-6 hover:scale-105 transition-all">
+                        <span class="text-[10px] uppercase font-extrabold text-primaryBlue tracking-wider">Clinical Intelligence Node</span>
+                        <span class="h-1 w-1 bg-primaryBlue rounded-full"></span>
+                        <span class="text-[10px] text-sky-800 font-semibold" id="hero-model-metric">Decision Tree Accuracy: 0.9980</span>
+                    </div>
+                    <h1 class="text-3xl md:text-5xl font-heading font-extrabold text-textDark tracking-tight leading-tight mb-4">
+                        Clinical Decision Support & <br class="hidden md:inline">
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-primaryBlue to-accentViolet font-black">Patient Outcome Predictor</span>
+                    </h1>
+                    <p class="text-textSec text-base md:text-lg mb-8 leading-relaxed font-light">
+                        Leverage predictive modeling to estimate clinical treatment costs, evaluate the necessity of surgical operations, and build dynamic care guides based on patient vitals and symptoms.
+                    </p>
+                    <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+                        <button onclick="switchTab('predictor')" class="px-8 py-4 bg-primaryBlue text-white font-semibold rounded-2xl hover:bg-sky-600 hover-lift shadow-lg shadow-primaryBlue/20 transition-all flex items-center justify-center space-x-2 text-sm">
+                            <span>Open Predictor Form</span>
+                            <i class="fa-solid fa-calculator text-xs"></i>
+                        </button>
+                        <button onclick="switchTab('directory')" class="px-8 py-4 bg-white text-textDark border border-slate-200 font-semibold rounded-2xl hover:bg-slate-50 hover-lift transition-all flex items-center justify-center space-x-2 text-sm">
+                            <span>Search Patient Database</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Stats Bento Grid -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8" id="dashboard-stats-grid">
+                <div class="glass-card p-6 rounded-2xl shimmer h-28"></div>
+                <div class="glass-card p-6 rounded-2xl shimmer h-28"></div>
+                <div class="glass-card p-6 rounded-2xl shimmer h-28"></div>
+                <div class="glass-card p-6 rounded-2xl shimmer h-28"></div>
+            </div>
+
+            <!-- Bento Row 2 -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Large card: Patient Explorer Preview (2cols span) -->
+                <div class="glass-card p-6 rounded-2xl lg:col-span-2">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 class="font-heading font-bold text-lg text-textDark">Clinical Dataset Explorer</h3>
+                            <p class="text-xs text-textSec">Previewing first 10 patient records from historical logs</p>
+                        </div>
+                        <button onclick="switchTab('directory')" class="text-xs font-semibold text-primaryBlue hover:underline flex items-center space-x-1">
+                            <span>View Directory</span>
+                            <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto custom-scrollbar max-h-96">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-textSec border-b border-slate-100">
+                                    <th class="p-3 font-semibold rounded-l-xl">ID</th>
+                                    <th class="p-3 font-semibold">Patient Name</th>
+                                    <th class="p-3 font-semibold">Age/Sex</th>
+                                    <th class="p-3 font-semibold">Disease Type</th>
+                                    <th class="p-3 font-semibold">Severity</th>
+                                    <th class="p-3 font-semibold">Stay</th>
+                                    <th class="p-3 font-semibold rounded-r-xl">Actual Cost</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dashboard-table-tbody">
+                                <tr class="border-b border-slate-50 animate-pulse"><td class="p-3" colspan="7"><div class="h-6 bg-slate-100 rounded"></div></td></tr>
+                                <tr class="border-b border-slate-50 animate-pulse"><td class="p-3" colspan="7"><div class="h-6 bg-slate-100 rounded"></div></td></tr>
+                                <tr class="border-b border-slate-50 animate-pulse"><td class="p-3" colspan="7"><div class="h-6 bg-slate-100 rounded"></div></td></tr>
+                                <tr class="border-b border-slate-50 animate-pulse"><td class="p-3" colspan="7"><div class="h-6 bg-slate-100 rounded"></div></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Bento Card: Data Integrity details info -->
+                <div class="glass-card p-6 rounded-2xl flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-heading font-bold text-lg text-textDark mb-4">Database & Pipe Integrity</h3>
+                        <p class="text-xs text-textSec mb-6 leading-relaxed">
+                            Vitals schema verified against physiological bounds. Missing elements, out-of-bounds metrics, and invalid records are automatically filtered.
+                        </p>
+                        <div class="space-y-4" id="dashboard-integrity-stats">
+                            <div class="flex justify-between items-center py-2 border-b border-slate-50 animate-pulse"><div class="h-4 w-20 bg-slate-100 rounded"></div><div class="h-4 w-10 bg-slate-100 rounded"></div></div>
+                            <div class="flex justify-between items-center py-2 border-b border-slate-50 animate-pulse"><div class="h-4 w-20 bg-slate-100 rounded"></div><div class="h-4 w-10 bg-slate-100 rounded"></div></div>
+                            <div class="flex justify-between items-center py-2 animate-pulse"><div class="h-4 w-20 bg-slate-100 rounded"></div><div class="h-4 w-10 bg-slate-100 rounded"></div></div>
+                        </div>
+                    </div>
+                    <div class="bg-slate-50 rounded-xl p-4 mt-6 border border-slate-100">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <span class="text-xs font-bold text-primaryBlue uppercase tracking-wide">Model Pipeline</span>
+                        </div>
+                        <p class="text-[11px] text-textSec leading-relaxed">
+                            Continuous data loading is synced directly with target classification trees. Inference runs locally in under 20 milliseconds.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PREDICTOR TAB -->
+        <div id="tab-predictor" class="tab-panel">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Left Column: Patient Form Card -->
+                <div class="glass-card p-6 rounded-3xl h-fit">
+                    <h3 class="font-heading font-extrabold text-xl text-textDark mb-6 flex items-center space-x-2">
+                        <i class="fa-solid fa-user-injured text-primaryBlue"></i>
+                        <span>Patient Parameters</span>
+                    </h3>
+
+                    <!-- Inputs Category Tabs -->
+                    <div class="flex bg-slate-100/80 p-1 rounded-xl mb-6 space-x-1">
+                        <button type="button" class="tab-btn active flex-1 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider text-center text-textSec hover:text-textDark active:bg-white" data-tab="demographics">Basics</button>
+                        <button type="button" class="tab-btn flex-1 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider text-center text-textSec hover:text-textDark" data-tab="vitals">Vitals</button>
+                        <button type="button" class="tab-btn flex-1 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider text-center text-textSec hover:text-textDark" data-tab="history">History</button>
+                        <button type="button" class="tab-btn flex-1 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider text-center text-textSec hover:text-textDark" data-tab="admission">Stay</button>
+                    </div>
+
+                    <form id="patientForm" onsubmit="return false;" class="space-y-5">
+                        <!-- Demographics Tab Content -->
+                        <div class="tab-content active" id="tab-demographics">
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-textSec uppercase tracking-wider mb-2">Patient Name</label>
+                                    <input type="text" id="Patient_Name" name="Patient_Name" value="Aryan A. Naidu" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primaryBlue/20 transition-all">
+                                </div>
+                                <div>
+                                    <div class="flex justify-between items-center mb-2">
+                                        <label class="text-[10px] font-bold text-textSec uppercase tracking-wider">Age (Years)</label>
+                                        <span class="text-xs font-bold text-primaryBlue" id="val-Age">54</span>
+                                    </div>
+                                    <input type="range" id="Age" name="Age" min="18" max="90" value="54" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primaryBlue">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-textSec uppercase tracking-wider mb-2">Gender</label>
+                                    <select id="Gender" name="Gender" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primaryBlue/20 transition-all cursor-pointer"></select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-textSec uppercase tracking-wider mb-2">Blood Group</label>
+                                    <select id="Blood_Group" name="Blood_Group" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primaryBlue/20 transition-all cursor-pointer"></select>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between items-center mb-2">
+                                        <label class="text-[10px] font-bold text-textSec uppercase tracking-wider">Height (cm)</label>
+                                        <span class="text-xs font-bold text-primaryBlue" id="val-Height_cm">170</span>
+                                    </div>
+                                    <input type="range" id="Height_cm" name="Height_cm" min="140" max="200" value="170" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primaryBlue">
+                                </div>
+                                <div>
+                                    <div class="flex justify-between items-center mb-2">
+                                        <label class="text-[10px] font-bold text-textSec uppercase tracking-wider">Weight (kg)</label>
+                                        <span class="text-xs font-bold text-primaryBlue" id="val-Weight_kg">80</span>
+                                    </div>
+                                    <input type="range" id="Weight_kg" name="Weight_kg" min="40" max="120" value="80" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primaryBlue">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Vitals Tab Content -->
+                        <div class="tab-content hidden" id="tab-vitals">
+                            <div class="space-y-4">
+                                <div>
+                                    <div class="flex justify-between items-center mb-2">
+                                        <label class="text-[10px] font-bold text-textSec uppercase tracking-wider">Systolic BP (mmHg)</label>
+                                        <span class="text-xs font-bold text-primaryBlue" id="val-Blood_Pressure">140</span>
+                                    </div>
+                                    <input type="range" id="Blood_Pressure" name="Blood_Pressure" min="90" max="190" value="140" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primaryBlue">
+                                </div>
+                                <div>
+                                    <div class="flex justify-between items-center mb-2">
+                                        <label class="text-[10px] font-bold text-textSec uppercase tracking-wider">Heart Rate (bpm)</label>
+                                        <span class="text-xs font-bold text-primaryBlue" id="val-Heart_Rate">93</span>
+                                    </div>
+                                    <input type="range" id="Heart_Rate" name="Heart_Rate" min="55" max="130" value="93" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primaryBlue">
+                                </div>
+                                <div>
+                                    <div class="flex justify-between items-center mb-2">
+                                        <label class="text-[10px] font-bold text-textSec uppercase tracking-wider">Oxygen Level (SpO2 %)</label>
+                                        <span class="text-xs font-bold text-primaryBlue" id="val-Oxygen_Level">93</span>
+                                    </div>
+                                    <input type="range" id="Oxygen_Level" name="Oxygen_Level" min="85" max="100" value="93" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primaryBlue">
+                                </div>
+                                <div>
+                                    <div class="flex justify-between items-center mb-2">
+                                        <label class="text-[10px] font-bold text-textSec uppercase tracking-wider">Blood Sugar (mg/dL)</label>
+                                        <span class="text-xs font-bold text-primaryBlue" id="val-Blood_Sugar">164</span>
+                                    </div>
+                                    <input type="range" id="Blood_Sugar" name="Blood_Sugar" min="70" max="260" value="164" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primaryBlue">
+                                </div>
+                                <div>
+                                    <div class="flex justify-between items-center mb-2">
+                                        <label class="text-[10px] font-bold text-textSec uppercase tracking-wider">Temperature (°C)</label>
+                                        <span class="text-xs font-bold text-primaryBlue" id="val-Temperature">38.0</span>
+                                    </div>
+                                    <input type="range" id="Temperature" name="Temperature" min="36.0" max="40.0" step="0.1" value="38.0" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primaryBlue">
+                                </div>
+                                <div>
+                                    <div class="flex justify-between items-center mb-2">
+                                        <label class="text-[10px] font-bold text-textSec uppercase tracking-wider">Cholesterol</label>
+                                        <span class="text-xs font-bold text-primaryBlue" id="val-Cholesterol">208</span>
+                                    </div>
+                                    <input type="range" id="Cholesterol" name="Cholesterol" min="120" max="300" value="208" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primaryBlue">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- History Tab Content -->
+                        <div class="tab-content hidden" id="tab-history">
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-textSec uppercase tracking-wider mb-2">Disease Type</label>
+                                    <select id="Disease_Type" name="Disease_Type" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primaryBlue/20 transition-all cursor-pointer"></select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-textSec uppercase tracking-wider mb-2">Disease Severity</label>
+                                    <select id="Disease_Severity" name="Disease_Severity" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primaryBlue/20 transition-all cursor-pointer"></select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-textSec uppercase tracking-wider mb-2">Condition Level</label>
+                                    <select id="Condition_Level" name="Condition_Level" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primaryBlue/20 transition-all cursor-pointer"></select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-textSec uppercase tracking-wider mb-2">Previous Disease</label>
+                                    <select id="Previous_Disease" name="Previous_Disease" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primaryBlue/20 transition-all cursor-pointer"></select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-textSec uppercase tracking-wider mb-2">Family History</label>
+                                    <select id="Family_History" name="Family_History" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primaryBlue/20 transition-all cursor-pointer"></select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Stay Tab Content -->
+                        <div class="tab-content hidden" id="tab-admission">
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-textSec uppercase tracking-wider mb-2">Emergency Case</label>
+                                    <select id="Emergency_Case" name="Emergency_Case" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primaryBlue/20 transition-all cursor-pointer"></select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-textSec uppercase tracking-wider mb-2">ICU Required</label>
+                                    <select id="ICU_Required" name="ICU_Required" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primaryBlue/20 transition-all cursor-pointer"></select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-textSec uppercase tracking-wider mb-2">Room Allotted</label>
+                                    <select id="Room_Allotted" name="Room_Allotted" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primaryBlue/20 transition-all cursor-pointer"></select>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between items-center mb-2">
+                                        <label class="text-[10px] font-bold text-textSec uppercase tracking-wider">Stay Duration (Days)</label>
+                                        <span class="text-xs font-bold text-primaryBlue" id="val-Hospital_Stay_Days">15</span>
+                                    </div>
+                                    <input type="range" id="Hospital_Stay_Days" name="Hospital_Stay_Days" min="1" max="25" value="15" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primaryBlue">
+                                </div>
+                                <div>
+                                    <div class="flex justify-between items-center mb-2">
+                                        <label class="text-[10px] font-bold text-textSec uppercase tracking-wider">Medication Count</label>
+                                        <span class="text-xs font-bold text-primaryBlue" id="val-Medication_Count">5</span>
+                                    </div>
+                                    <input type="range" id="Medication_Count" name="Medication_Count" min="0" max="10" value="5" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primaryBlue">
+                                </div>
+                                <div>
+                                    <div class="flex justify-between items-center mb-2">
+                                        <label class="text-[10px] font-bold text-textSec uppercase tracking-wider">Doctor Visits</label>
+                                        <span class="text-xs font-bold text-primaryBlue" id="val-Doctor_Visits">8</span>
+                                    </div>
+                                    <input type="range" id="Doctor_Visits" name="Doctor_Visits" min="0" max="15" value="8" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primaryBlue">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-textSec uppercase tracking-wider mb-2">Insurance Type</label>
+                                    <select id="Insurance_Type" name="Insurance_Type" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primaryBlue/20 transition-all cursor-pointer"></select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-textSec uppercase tracking-wider mb-2">Exercise Level</label>
+                                    <select id="Exercise_Level" name="Exercise_Level" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primaryBlue/20 transition-all cursor-pointer"></select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-textSec uppercase tracking-wider mb-2">Smoking Status</label>
+                                    <select id="Smoking_Status" name="Smoking_Status" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primaryBlue/20 transition-all cursor-pointer"></select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-textSec uppercase tracking-wider mb-2">Alcohol Status</label>
+                                    <select id="Alcohol_Status" name="Alcohol_Status" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primaryBlue/20 transition-all cursor-pointer"></select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-textSec uppercase tracking-wider mb-2">Diet Type</label>
+                                    <select id="Diet_Type" name="Diet_Type" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primaryBlue/20 transition-all cursor-pointer"></select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Submit Button -->
+                        <div class="pt-4">
+                            <button type="button" id="btnPredictBoth" class="w-full py-4 bg-gradient-to-r from-primaryBlue to-accentViolet text-white font-bold rounded-2xl hover:shadow-lg hover-lift shadow-md transition-all flex items-center justify-center space-x-2 text-sm">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                <span>Evaluate Outcome metrics</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Right 2 Columns: Outputs and Dashboards -->
+                <div class="lg:col-span-2 space-y-8">
+                    <!-- Heading Header -->
+                    <div class="glass-card px-6 py-4 rounded-2xl bg-gradient-to-r from-white to-sky-50/20 flex justify-between items-center">
+                        <div>
+                            <h2 class="font-heading font-extrabold text-lg text-textDark">Outcome Predictions Dashboard</h2>
+                            <p class="text-xs text-textSec" id="patientDisplayName">Patient: Aryan A. Naidu</p>
+                        </div>
+                        <span class="text-xs bg-slate-100 text-slate-800 px-3 py-1 rounded-full font-bold uppercase tracking-wider">Dual Core</span>
+                    </div>
+
+                    <!-- Predictions Cards Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Cost Regressor Output Card -->
+                        <div class="glass-card p-6 rounded-3xl relative overflow-hidden flex flex-col justify-between min-h-[220px] border-t-4 border-t-primaryBlue">
+                            <div class="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-sky-300/10 blur-xl"></div>
+                            
+                            <div>
+                                <div class="flex justify-between items-start mb-4">
+                                    <span class="text-[9px] uppercase font-bold text-textSec bg-slate-100 px-2 py-0.5 rounded-full">Decision Tree Regressor</span>
+                                </div>
+                                <h3 class="font-heading font-bold text-textSec text-sm">Predicted Treatment Cost</h3>
+                                <div class="flex items-baseline mt-4 mb-2">
+                                    <span class="text-xl font-extrabold text-primaryBlue mr-1">₹</span>
+                                    <span id="predictedCostValue" class="text-3xl md:text-4xl font-extrabold text-textDark tracking-tight leading-none">---,---</span>
+                                </div>
+                                
+                                <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden mt-4">
+                                    <div id="costProgress" class="bg-primaryBlue h-full rounded-full transition-all duration-1000" style="width: 0%;"></div>
+                                </div>
+                                <div class="flex justify-between text-[9px] font-bold text-textSec mt-1">
+                                    <span>Min: ₹25K</span>
+                                    <span id="costPercentText">0% of max record</span>
+                                    <span>Max: ₹1.06M</span>
+                                </div>
+                            </div>
+
+                            <div class="pt-4 border-t border-slate-100 mt-6 flex justify-between items-center">
+                                <label class="text-[10px] font-bold text-textSec uppercase tracking-wider" for="Operation_Needed_Input">Operation Required?</label>
+                                <select id="Operation_Needed_Input" class="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs font-semibold focus:outline-none">
+                                    <option value="No">No</option>
+                                    <option value="Yes">Yes</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Operation Classifier Output Card -->
+                        <div class="glass-card p-6 rounded-3xl relative overflow-hidden flex flex-col justify-between min-h-[220px] border-t-4 border-t-accentViolet">
+                            <div class="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-violet-300/10 blur-xl"></div>
+                            
+                            <div>
+                                <div class="flex justify-between items-start mb-4">
+                                    <span class="text-[9px] uppercase font-bold text-textSec bg-slate-100 px-2 py-0.5 rounded-full">Decision Tree Classifier</span>
+                                </div>
+                                <h3 class="font-heading font-bold text-textSec text-sm mb-4">Is Operation Needed?</h3>
+                                
+                                <div class="flex justify-center py-2">
+                                    <div id="predictedOperationBadge" class="op-badge flex items-center space-x-2 px-6 py-2.5 rounded-xl font-heading font-bold text-base bg-slate-100 text-textSec border border-slate-200">
+                                        <i class="fa-solid fa-question animate-bounce"></i>
+                                        <span>UNKNOWN</span>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4">
+                                    <div class="flex justify-between text-[9px] font-bold text-textSec mb-1">
+                                        <span>Confidence Indicator</span>
+                                        <span id="probPercentText" class="text-accentViolet">--%</span>
+                                    </div>
+                                    <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                        <div id="probProgress" class="bg-accentViolet h-full rounded-full transition-all duration-1000" style="width: 0%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="pt-4 border-t border-slate-100 mt-6 flex justify-between items-center">
+                                <label class="text-[10px] font-bold text-textSec uppercase tracking-wider" for="Treatment_Cost_Input">Treatment Cost (₹)</label>
+                                <input type="number" id="Treatment_Cost_Input" class="w-24 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs font-semibold text-right focus:outline-none" value="542854">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ground Truth Comparison Card -->
+                    <div id="groundTruthPanel" class="glass-card p-6 rounded-3xl hidden bg-gradient-to-tr from-sky-50/15 via-white/80 to-violet-50/10">
+                        <h3 class="font-heading font-bold text-lg text-textDark mb-4 flex items-center space-x-2">
+                            <i class="fa-solid fa-code-compare text-primaryBlue"></i>
+                            <span>Patient Excel Record Ground Truth</span>
+                        </h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                <span class="text-[9px] text-textSec font-bold uppercase tracking-wider block mb-1">Actual Treatment Cost</span>
+                                <span id="gtCost" class="text-xl font-extrabold text-textDark">₹---,---</span>
+                            </div>
+                            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                <span class="text-[9px] text-textSec font-bold uppercase tracking-wider block mb-1">Actual Operation Status</span>
+                                <span id="gtOp" class="text-xs font-bold text-textDark">---</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Clinical Care Plan & Recommendations -->
+                    <div id="carePlanPanel" class="glass-card p-6 rounded-3xl hidden bg-white">
+                        <h3 class="font-heading font-bold text-lg text-textDark mb-6 flex items-center space-x-2">
+                            <i class="fa-solid fa-heart-pulse text-rose-500 animate-pulse"></i>
+                            <span>Clinical Care Plan & Suggestions</span>
+                        </h3>
+                        <div class="space-y-6">
+                            <div class="flex items-start space-x-4">
+                                <div class="h-10 w-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold shrink-0">
+                                    <i class="fa-solid fa-apple-whole"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-heading font-bold text-textDark text-sm">Dietary Suggestions</h4>
+                                    <p id="dietSuggestionText" class="text-xs text-textSec mt-1 leading-relaxed"></p>
+                                </div>
+                            </div>
+                            <div class="flex items-start space-x-4">
+                                <div class="h-10 w-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center font-bold shrink-0">
+                                    <i class="fa-solid fa-prescription-bottle-medical"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-heading font-bold text-textDark text-sm">Medication & Clinical Protocol</h4>
+                                    <p id="medSuggestionText" class="text-xs text-textSec mt-1 leading-relaxed"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Local Drivers (Feature Importance) -->
+                    <div class="glass-card p-6 rounded-3xl bg-slate-50/50">
+                        <div class="flex justify-between items-center mb-6">
+                            <div>
+                                <h3 class="font-heading font-bold text-base text-textDark">Model Drivers</h3>
+                                <p class="text-[10px] text-textSec">Primary features driving the predictions</p>
+                            </div>
+                            <div class="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                                <button id="toggleRegImp" class="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all bg-white text-textDark shadow-sm">Cost</button>
+                                <button id="toggleClfImp" class="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all text-textSec">Surgery</button>
+                            </div>
+                        </div>
+                        <div class="space-y-4" id="importanceChart">
+                            <div class="shimmer h-8 rounded-lg"></div>
+                            <div class="shimmer h-8 rounded-lg"></div>
+                            <div class="shimmer h-8 rounded-lg"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DIRECTORY TAB -->
+        <div id="tab-directory" class="tab-panel">
+            <div class="glass-card p-6 rounded-3xl">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
+                    <div>
+                        <h2 class="font-heading font-extrabold text-2xl text-textDark">Patient Records Directory</h2>
+                        <p class="text-xs text-textSec">Select a patient record from the database to load their vitals and trigger immediate evaluations</p>
+                    </div>
+                    <div class="relative w-full md:w-80">
+                        <i class="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-textSec text-sm"></i>
+                        <input type="text" id="patientSearchInput" placeholder="Search by name, disease..." class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primaryBlue/20 transition-all">
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-textSec border-b border-slate-100">
+                                <th class="p-4 font-semibold rounded-l-2xl">Patient Name</th>
+                                <th class="p-4 font-semibold">Age / Gender</th>
+                                <th class="p-4 font-semibold">Blood Group</th>
+                                <th class="p-4 font-semibold">Disease Type</th>
+                                <th class="p-4 font-semibold">Severity</th>
+                                <th class="p-4 font-semibold">Stay Duration</th>
+                                <th class="p-4 font-semibold">Actual Cost</th>
+                                <th class="p-4 font-semibold">Operation Needed</th>
+                                <th class="p-4 font-semibold rounded-r-2xl text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="patientListBody">
+                            <tr class="border-b border-slate-50"><td class="p-8 text-center text-textSec" colspan="9"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading directory...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ANALYTICS TAB -->
+        <div id="tab-analytics" class="tab-panel">
+            <!-- Summary cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" id="analytics-summary-cards">
+                <div class="glass-card p-6 rounded-2xl shimmer h-28"></div>
+                <div class="glass-card p-6 rounded-2xl shimmer h-28"></div>
+                <div class="glass-card p-6 rounded-2xl shimmer h-28"></div>
+                <div class="glass-card p-6 rounded-2xl shimmer h-28"></div>
+            </div>
+
+            <!-- Graphs Bento Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="glass-card p-6 rounded-3xl">
+                    <h3 class="font-heading font-bold text-textDark text-base mb-6">Patient Disease Distribution</h3>
+                    <div class="h-80 relative">
+                        <canvas id="chart-cat-dist"></canvas>
+                    </div>
+                </div>
+                <div class="glass-card p-6 rounded-3xl">
+                    <h3 class="font-heading font-bold text-textDark text-base mb-6">Average Treatment Cost by Severity</h3>
+                    <div class="h-80 relative">
+                        <canvas id="chart-brand-dist"></canvas>
+                    </div>
+                </div>
+                <div class="glass-card p-6 rounded-3xl">
+                    <h3 class="font-heading font-bold text-textDark text-base mb-6">Patient Treatment Cost Distribution</h3>
+                    <div class="h-80 relative">
+                        <canvas id="chart-price-dist"></canvas>
+                    </div>
+                </div>
+                <div class="glass-card p-6 rounded-3xl">
+                    <h3 class="font-heading font-bold text-textDark text-base mb-6">Patient Age Group Distribution</h3>
+                    <div class="h-80 relative">
+                        <canvas id="chart-rating-dist"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MACHINE LEARNING TAB -->
+        <div id="tab-ml" class="tab-panel">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Left Sidebar: Model Specs -->
+                <div class="glass-card p-6 rounded-3xl h-fit space-y-6">
+                    <div>
+                        <span class="px-2.5 py-1 bg-sky-50 text-primaryBlue border border-sky-100 rounded-md text-[9px] font-extrabold uppercase tracking-wider">Clinical Core</span>
+                        <h2 class="font-heading font-extrabold text-2xl text-textDark mt-3 mb-2">Pipeline Metrics</h2>
+                        <p class="text-xs text-textSec leading-relaxed">Continuous validation scores across stratified train-test splits.</p>
+                    </div>
+                    <div class="space-y-4" id="ml-metrics-content">
+                        <!-- Loaded via JS -->
+                        <div class="shimmer h-24 rounded-2xl"></div>
+                        <div class="shimmer h-24 rounded-2xl"></div>
+                    </div>
+                </div>
+
+                <!-- Right 2 Columns: Visualizations -->
+                <div class="lg:col-span-2 space-y-8">
+                    <div class="glass-card p-6 rounded-3xl">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+                            <div>
+                                <h3 class="font-heading font-bold text-lg text-textDark">Model Validation Visualizer</h3>
+                                <p class="text-xs text-textSec">Select an evaluation graph from the dropdown below</p>
+                            </div>
+                            <select id="ml-chart-selector" onchange="renderMlChart()" class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-semibold focus:outline-none cursor-pointer">
+                                <option value="importance">Regressor Feature Importance</option>
+                                <option value="importance_clf">Classifier Feature Importance</option>
+                                <option value="heatmap">Correlation Matrix</option>
+                                <option value="scatter">Treatment Cost vs Stay Days</option>
+                            </select>
+                        </div>
+
+                        <div class="h-[400px] relative w-full flex items-center justify-center">
+                            <canvas id="chart-ml-visualizer" class="w-full h-full"></canvas>
+                            <!-- Fallback overlay -->
+                            <div id="ml-chart-fallback" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-50/95 rounded-2xl p-6 text-center hidden">
+                                <span class="text-3xl mb-3">📊</span>
+                                <h4 class="text-sm font-semibold text-textDark">Visualizations Locked</h4>
+                                <p class="text-xs text-textSec max-w-xs mt-1">Please verify model initialization from the backend to load interactive dependency charts.</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 p-4 bg-slate-50 border border-slate-100 rounded-2xl hidden" id="ml-chart-alert">
+                            <div class="flex space-x-3">
+                                <i class="fa-solid fa-circle-info text-primaryBlue mt-0.5"></i>
+                                <div>
+                                    <h4 class="text-xs font-bold text-textDark">Analysis</h4>
+                                    <p class="text-[11px] text-textSec mt-0.5 leading-relaxed" id="ml-chart-alert-desc"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TEAM TAB -->
+        <div id="tab-team" class="tab-panel">
+            <div class="space-y-8">
+                <div class="text-center max-w-3xl mx-auto mb-12">
+                    <span class="px-3 py-1 bg-violet-50 text-accentViolet rounded-full text-xs font-bold uppercase tracking-wider border border-violet-100">Project Hub</span>
+                    <h2 class="font-heading font-extrabold text-3xl text-textDark mt-3 mb-4">Project Development Team Contributions</h2>
+                    <p class="text-textSec text-sm leading-relaxed">
+                        Explore the contributions of each development engineer throughout the training, preprocessing, modeling, and dashboard construction cycle.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Girish Card -->
+                    <div class="bg-white rounded-3xl p-6 border border-slate-200/60 shadow-premium hover-lift relative overflow-hidden flex flex-col justify-between min-h-[280px]">
+                        <div class="absolute top-0 left-0 w-2.5 h-full bg-primaryBlue"></div>
+                        <div>
+                            <div class="flex items-center space-x-4 mb-4">
+                                <div class="h-12 w-12 rounded-full bg-sky-500/10 text-primaryBlue flex items-center justify-center font-bold text-lg">
+                                    GJ
+                                </div>
+                                <div>
+                                    <h4 class="font-heading font-bold text-textDark text-base">Girish</h4>
+                                    <span class="text-xs font-bold text-primaryBlue uppercase tracking-wider">Machine Learning Engineer</span>
+                                </div>
+                            </div>
+                            <p class="text-textSec text-xs mb-6 leading-relaxed">
+                                Formulated the clinical modeling pipeline, conducted Random Forest regressor and classifier setups, and calibrated train-test splits.
+                            </p>
+                            <div>
+                                <span class="block text-[9px] font-bold text-textSec uppercase tracking-wider mb-2">Core Focus</span>
+                                <div class="flex flex-wrap gap-1.5">
+                                    <span class="px-2 py-0.5 rounded-md text-[9px] font-semibold bg-slate-50 text-textSec border border-slate-100">Random Forest</span>
+                                    <span class="px-2 py-0.5 rounded-md text-[9px] font-semibold bg-slate-50 text-textSec border border-slate-100">Pickle Export</span>
+                                    <span class="px-2 py-0.5 rounded-md text-[9px] font-semibold bg-slate-50 text-textSec border border-slate-100">NLP Classifier</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-6 pt-4 border-t border-slate-100 flex items-center space-x-2">
+                            <span class="h-2 w-2 bg-successGreen rounded-full"></span>
+                            <span class="text-[9px] font-bold text-successGreen tracking-wide uppercase">Core Completed</span>
+                        </div>
+                    </div>
+
+                    <!-- Karandeep Card -->
+                    <div class="bg-white rounded-3xl p-6 border border-slate-200/60 shadow-premium hover-lift relative overflow-hidden flex flex-col justify-between min-h-[280px]">
+                        <div class="absolute top-0 left-0 w-2.5 h-full bg-secondaryTeal"></div>
+                        <div>
+                            <div class="flex items-center space-x-4 mb-4">
+                                <div class="h-12 w-12 rounded-full bg-teal-500/10 text-secondaryTeal flex items-center justify-center font-bold text-lg">
+                                    KG
+                                </div>
+                                <div>
+                                    <h4 class="font-heading font-bold text-textDark text-base">Karandeep Singh Grewal</h4>
+                                    <span class="text-xs font-bold text-secondaryTeal uppercase tracking-wider">Data Preprocessing Engineer</span>
+                                </div>
+                            </div>
+                            <p class="text-textSec text-xs mb-6 leading-relaxed">
+                                Curated the clinical dataset schema, resolved null records, handled text normalization, and fit baseline Label Encoders.
+                            </p>
+                            <div>
+                                <span class="block text-[9px] font-bold text-textSec uppercase tracking-wider mb-2">Core Focus</span>
+                                <div class="flex flex-wrap gap-1.5">
+                                    <span class="px-2 py-0.5 rounded-md text-[9px] font-semibold bg-slate-50 text-textSec border border-slate-100">LabelEncoder</span>
+                                    <span class="px-2 py-0.5 rounded-md text-[9px] font-semibold bg-slate-50 text-textSec border border-slate-100">Data Cleansing</span>
+                                    <span class="px-2 py-0.5 rounded-md text-[9px] font-semibold bg-slate-50 text-textSec border border-slate-100">Outlier Check</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-6 pt-4 border-t border-slate-100 flex items-center space-x-2">
+                            <span class="h-2 w-2 bg-successGreen rounded-full"></span>
+                            <span class="text-[9px] font-bold text-successGreen tracking-wide uppercase">Core Completed</span>
+                        </div>
+                    </div>
+
+                    <!-- Sargunpreet Card -->
+                    <div class="bg-white rounded-3xl p-6 border border-slate-200/60 shadow-premium hover-lift relative overflow-hidden flex flex-col justify-between min-h-[280px]">
+                        <div class="absolute top-0 left-0 w-2.5 h-full bg-accentViolet"></div>
+                        <div>
+                            <div class="flex items-center space-x-4 mb-4">
+                                <div class="h-12 w-12 rounded-full bg-purple-500/10 text-accentViolet flex items-center justify-center font-bold text-lg">
+                                    SS
+                                </div>
+                                <div>
+                                    <h4 class="font-heading font-bold text-textDark text-base">Sargunpreet Singh</h4>
+                                    <span class="text-xs font-bold text-accentViolet uppercase tracking-wider">Evaluation & Analytics</span>
+                                </div>
+                            </div>
+                            <p class="text-textSec text-xs mb-6 leading-relaxed">
+                                Assessed prediction errors, computed model importances, verified accuracy indices, and generated statistical plots.
+                            </p>
+                            <div>
+                                <span class="block text-[9px] font-bold text-textSec uppercase tracking-wider mb-2">Core Focus</span>
+                                <div class="flex flex-wrap gap-1.5">
+                                    <span class="px-2 py-0.5 rounded-md text-[9px] font-semibold bg-slate-50 text-textSec border border-slate-100">R2 Metrics</span>
+                                    <span class="px-2 py-0.5 rounded-md text-[9px] font-semibold bg-slate-50 text-textSec border border-slate-100">Feature Importance</span>
+                                    <span class="px-2 py-0.5 rounded-md text-[9px] font-semibold bg-slate-50 text-textSec border border-slate-100">Split Evaluation</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-6 pt-4 border-t border-slate-100 flex items-center space-x-2">
+                            <span class="h-2 w-2 bg-successGreen rounded-full"></span>
+                            <span class="text-[9px] font-bold text-successGreen tracking-wide uppercase">Core Completed</span>
+                        </div>
+                    </div>
+
+                    <!-- Nipun Card -->
+                    <div class="bg-white rounded-3xl p-6 border border-slate-200/60 shadow-premium hover-lift relative overflow-hidden flex flex-col justify-between min-h-[280px]">
+                        <div class="absolute top-0 left-0 w-2.5 h-full bg-amber-500"></div>
+                        <div>
+                            <div class="flex items-center space-x-4 mb-4">
+                                <div class="h-12 w-12 rounded-full bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold text-lg">
+                                    NT
+                                </div>
+                                <div>
+                                    <h4 class="font-heading font-bold text-textDark text-base">Nipun Thakur</h4>
+                                    <span class="text-xs font-bold text-amber-600 uppercase tracking-wider">Deployment & Integration</span>
+                                </div>
+                            </div>
+                            <p class="text-textSec text-xs mb-6 leading-relaxed">
+                                Formulated the dynamic Flask server endpoints, built the dashboard templates, and wired pipeline data connections.
+                            </p>
+                            <div>
+                                <span class="block text-[9px] font-bold text-textSec uppercase tracking-wider mb-2">Core Focus</span>
+                                <div class="flex flex-wrap gap-1.5">
+                                    <span class="px-2 py-0.5 rounded-md text-[9px] font-semibold bg-slate-50 text-textSec border border-slate-100">Flask Server</span>
+                                    <span class="px-2 py-0.5 rounded-md text-[9px] font-semibold bg-slate-50 text-textSec border border-slate-100">HTML5 / JS</span>
+                                    <span class="px-2 py-0.5 rounded-md text-[9px] font-semibold bg-slate-50 text-textSec border border-slate-100">API Wireframes</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-6 pt-4 border-t border-slate-100 flex items-center space-x-2">
+                            <span class="h-2 w-2 bg-successGreen rounded-full"></span>
+                            <span class="text-[9px] font-bold text-successGreen tracking-wide uppercase">Core Completed</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Summary Section -->
+                <div class="glass-card p-6 md:p-8 rounded-3xl max-w-2xl mx-auto mt-12 bg-gradient-to-tr from-white to-sky-50/10">
+                    <h3 class="font-heading font-bold text-lg text-textDark mb-6 flex items-center space-x-2">
+                        <i class="fa-solid fa-circle-check text-successGreen"></i>
+                        <span>Project Milestone Verification</span>
+                    </h3>
+                    <div class="border border-slate-100 rounded-2xl overflow-hidden shadow-sm bg-white">
+                        <table class="w-full text-left text-xs">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-100 text-textSec font-semibold uppercase tracking-wider">
+                                    <th class="p-4">Phase</th>
+                                    <th class="p-4 text-right">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-textDark font-medium">
+                                <tr>
+                                    <td class="p-4">Clinical Data Parsing</td>
+                                    <td class="p-4 text-right"><span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-teal-50 text-secondaryTeal border border-teal-100">✅ COMPLETED</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="p-4">Demographics & Vitals Feature Encoding</td>
+                                    <td class="p-4 text-right"><span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-teal-50 text-secondaryTeal border border-teal-100">✅ COMPLETED</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="p-4">Regression & Decision Tree Training</td>
+                                    <td class="p-4 text-right"><span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-teal-50 text-secondaryTeal border border-teal-100">✅ COMPLETED</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="p-4">Flask Endpoint Integration</td>
+                                    <td class="p-4 text-right"><span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-teal-50 text-secondaryTeal border border-teal-100">✅ COMPLETED</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ABOUT TAB -->
+        <div id="tab-about" class="tab-panel">
+            <div class="max-w-4xl mx-auto space-y-12">
+                <div class="text-center">
+                    <span class="px-3 py-1 bg-sky-50 text-primaryBlue rounded-full text-xs font-bold uppercase tracking-wider border border-sky-100">Documentation</span>
+                    <h2 class="font-heading font-extrabold text-3xl text-textDark mt-3 mb-4">About MedPredict AI</h2>
+                    <p class="text-textSec text-sm leading-relaxed max-w-2xl mx-auto">
+                        An advanced clinical decision support system designed to assist healthcare professionals in predicting patient treatment costs and evaluating surgical requirements.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="glass-card p-6 rounded-3xl">
+                        <h3 class="font-heading font-bold text-lg text-textDark mb-4 flex items-center space-x-2">
+                            <i class="fa-solid fa-brain text-primaryBlue"></i>
+                            <span>Predictive Intelligence</span>
+                        </h3>
+                        <p class="text-xs text-textSec leading-relaxed mb-4">
+                            The platform utilizes optimized Random Forest estimators trained on historical patient records. The models analyze demographics, clinical vitals (blood pressure, oxygen levels, sugar), and admission stay details to generate cost and surgical estimates.
+                        </p>
+                        <ul class="text-xs text-textSec space-y-2">
+                            <li class="flex items-center space-x-2">
+                                <i class="fa-solid fa-circle-check text-successGreen"></i>
+                                <span><strong>Regressor R² Score:</strong> 73.16%</span>
+                            </li>
+                            <li class="flex items-center space-x-2">
+                                <i class="fa-solid fa-circle-check text-successGreen"></i>
+                                <span><strong>Classifier Accuracy:</strong> 99.80%</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="glass-card p-6 rounded-3xl">
+                        <h3 class="font-heading font-bold text-lg text-textDark mb-4 flex items-center space-x-2">
+                            <i class="fa-solid fa-shield-halved text-secondaryTeal"></i>
+                            <span>Clinical Safeguards</span>
+                        </h3>
+                        <p class="text-xs text-textSec leading-relaxed">
+                            Designed as a decision support tool, MedPredict AI includes built-in polypharmacy warnings, pre-operative fasting alerts, and disease-specific dietary guidelines. All outputs are intended to complement, not replace, professional clinical judgment.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200/50 py-6 text-center text-xs text-textSec">
+        <p>&copy; 2026 MedPredict AI. Premium Decision Support Platform. All rights reserved.</p>
+    </footer>
+
+    <!-- App Logic -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,153 @@
+{
+    "feature_order": [
+        "Age",
+        "Gender",
+        "Blood_Group",
+        "Height_cm",
+        "Weight_kg",
+        "Blood_Pressure",
+        "Heart_Rate",
+        "Oxygen_Level",
+        "Blood_Sugar",
+        "Temperature",
+        "Cholesterol",
+        "Disease_Type",
+        "Disease_Severity",
+        "Previous_Disease",
+        "Family_History",
+        "Emergency_Case",
+        "ICU_Required",
+        "Medication_Count",
+        "Doctor_Visits",
+        "Insurance_Type",
+        "Exercise_Level",
+        "Smoking_Status",
+        "Alcohol_Status",
+        "Diet_Type",
+        "Condition_Level",
+        "Hospital_Stay_Days",
+        "Operation_Needed",
+        "Room_Allotted"
+    ],
+    "categorical_features": [
+        "Gender",
+        "Blood_Group",
+        "Disease_Type",
+        "Disease_Severity",
+        "Previous_Disease",
+        "Family_History",
+        "Emergency_Case",
+        "ICU_Required",
+        "Insurance_Type",
+        "Exercise_Level",
+        "Smoking_Status",
+        "Alcohol_Status",
+        "Diet_Type",
+        "Condition_Level",
+        "Room_Allotted"
+    ],
+    "numeric_features": [
+        "Age",
+        "Height_cm",
+        "Weight_kg",
+        "Blood_Pressure",
+        "Heart_Rate",
+        "Oxygen_Level",
+        "Blood_Sugar",
+        "Temperature",
+        "Cholesterol",
+        "Medication_Count",
+        "Doctor_Visits",
+        "Hospital_Stay_Days"
+    ],
+    "label_classes": {
+        "Gender": [
+            "Female",
+            "Male"
+        ],
+        "Blood_Group": [
+            "A+",
+            "A-",
+            "AB+",
+            "AB-",
+            "B+",
+            "B-",
+            "O+",
+            "O-"
+        ],
+        "Disease_Type": [
+            "Diabetes",
+            "Fever",
+            "Heart Disease",
+            "Kidney Disease",
+            "Not Available",
+            "Respiratory Infection"
+        ],
+        "Disease_Severity": [
+            "High",
+            "Low",
+            "Medium"
+        ],
+        "Previous_Disease": [
+            "No",
+            "Yes"
+        ],
+        "Family_History": [
+            "No",
+            "Yes"
+        ],
+        "Emergency_Case": [
+            "No",
+            "Yes"
+        ],
+        "ICU_Required": [
+            "No",
+            "Yes"
+        ],
+        "Insurance_Type": [
+            "Government",
+            "Not Available",
+            "Private"
+        ],
+        "Exercise_Level": [
+            "High",
+            "Low",
+            "Medium"
+        ],
+        "Smoking_Status": [
+            "Daily",
+            "Never",
+            "Occasionally"
+        ],
+        "Alcohol_Status": [
+            "High",
+            "Moderate",
+            "Not Available"
+        ],
+        "Diet_Type": [
+            "Healthy",
+            "Mixed",
+            "Poor"
+        ],
+        "Condition_Level": [
+            "Critical",
+            "Mild",
+            "Normal"
+        ],
+        "Room_Allotted": [
+            "Emergency Room",
+            "General Room",
+            "ICU",
+            "Operation Ward",
+            "Private Room"
+        ],
+        "Operation_Needed": [
+            "No",
+            "Yes"
+        ]
+    },
+    "model_metrics": {
+        "regression_r2": 0.7318288003556982,
+        "classification_accuracy": 1.0
+    }
+}
